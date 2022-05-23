@@ -1,0 +1,9 @@
+pymysql
+flask
+flask-sqlalchemy
+flask-limiter
+werkzeug==2.0.3
+pillow
+pycryptodome
+gunicorn
+gevent
