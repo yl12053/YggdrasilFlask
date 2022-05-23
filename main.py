@@ -10,7 +10,6 @@ from datetime import datetime
 import threading
 import werkzeug.exceptions
 from flask_limiter import Limiter
-import bcrypt
 from sqlalchemy.dialects import mysql
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -99,59 +98,6 @@ class C_S_Record(db.Model):
         self.serverId = serverId
         self.ip = ip
         self.username = username
-
-class ForumUser(db.Model):
-    __bind_key__ = 'forum'
-    __tablename__ = 'users'
-    id = db.Column(db.INT(), primary_key=True, nullable=False)
-    username = db.Column(db.VARCHAR(100), nullable=False)
-    nickname = db.Column(db.VARCHAR(255))
-    email = db.Column(db.VARCHAR(150), nullable=False)
-    is_email_confirmed = db.Column(mysql.TINYINT(1), nullable=False)
-    password = db.Column(db.VARCHAR(100), nullable=False)
-    avatar_url = db.Column(db.VARCHAR(100))
-    preferences = db.Column(db.BLOB)
-    joined_at = db.Column(db.DateTime)
-    last_seen_at = db.Column(db.DateTime)
-    marked_all_as_read_at = db.Column(db.DateTime)
-    read_notifications_at = db.Column(db.DateTime)
-    discussion_count = db.Column(db.INT(), nullable=False)
-    comment_count = db.Column(db.INT(), nullable=False)
-    read_flags_at = db.Column(db.DateTime)
-    suspended_until = db.Column(db.DateTime)
-    suspend_reason = db.Column(db.Text)
-    bio = db.Column(db.Text)
-    blocks_byobu_pd = db.Column(mysql.TINYINT(1), nullable=False)
-    def __init__(self, id, username, nickname, email, is_email_confirmed, password, avatar_url, preferences, joined_at, last_seen_at, marked_all_as_read_at, read_notifications_at, discussion_count, comment_count, read_flags_at, suspended_until, suspended_reason, bio, blocks_byobu_pd):
-        self.id = id
-        self.username = username
-        self.nickname = nickname
-        self.email = email
-        self.is_email_confirmed = is_email_confirmed
-        self.password = password
-        self.avatar_url = avatar_url
-        self.preferences = preferences
-        self.joined_at = joined_at
-        self.last_seen_at = last_seen_at
-        self.marked_all_as_read_at = marked_all_as_read_at
-        self.read_notifications_at = read_notifications_at
-        self.discussion_count = discussion_count
-        self.comment_count = comment_count
-        self.read_flags_at = read_flags_at
-        self.suspended_until = suspended_until
-        self.suspended_reason = suspended_reason
-        self.bio = bio
-        self.blocks_byobu_pd = blocks_byobu_pd
-
-class ForumBind(db.Model):
-    __tablename__ = "Forum_Bind"
-    id = db.Column(db.BINARY(16), primary_key=True)
-    forum_id = db.Column(db.INT, nullable=False)
-    forum_username = db.Column(db.VARCHAR(255), nullable=False)
-    def __init__(self, id, forum_id, forum_username):
-        self.id = id
-        self.forum_id = forum_id
-        self.forum_username = forum_username
 
 #Cleaner
 def Token_Cleaner(app):
@@ -246,27 +192,21 @@ def Authenticate():
                     abort(403)
         if request.json['agent'] != {"name":"Minecraft", "version":1}:
             abort(400)
-        response = ForumUser.query.filter_by(email=request.json['username'], is_email_confirmed=1).first()
+        response = PlayerLogin.query.filter_by(email=request.json['username']).first()
         if response == None:
-            r2 = ForumBind.query.filter_by(forum_username=request.json['username']).first()
+            r2 = ProfileData.query.filter_by(name=request.json['username']).first()
             if r2 == None:
                 return ErrorHandler(error.InvalidCredentials())
             else:
-                response = ForumUser.query.filter_by(id=r2.forum_id, username=r2.forum_username)
+                response = PlayerLogin.query.filter_by(id=r2.id)
                 if response == None:
                     db.session.delete(r2)
                     db.session.commit()
                     return ErrorHandler(error.InvalidCredentials())
                 cused = False
-        else:
-            r2 = ForumBind.query.filter_by(forum_id=response.id, forum_username=response.username).first()
-            if r2 is None:
-                return ErrorHandler(error.InvalidCredentials())
-            cused=False
         pwd = request.json['password']
-        if not bcrypt.checkpw(pwd, response.password):
+        if hashlib.sha256(pwd).digest() != response.password:
             return ErrorHandler(error.InvalidCredentials())
-        response = PlayerLogin.query.filter_by(id=r2.id)
         toks = Token.query.filter_by(player=response.id, validity=1).all()
         for x in toks:
             x.validity = 2
@@ -415,15 +355,11 @@ def signout():
     for x in ['username', 'password']:
         if x not in request.json.keys():
             abort(400)
-    u = ForumUser.query.filter_by(email=request.json['username'], is_email_confirmed=1).first()
+    u = PlayerLogin.query.filter_by(email=request.json['username']).first()
     if u == None:
         return ErrorHandler(error.InvalidCredentials())
-    fb = ForumBind.query.filter_by(forum_id=u.id, forum_username=u.username).first()
-    if fb is None:
+    else if u.password != hashlib.sha256(request.json['password'].encode()).digest():
         return ErrorHandler(error.InvalidCredentials())
-    if not bcrypt.checkpw(request.json['password'], u.password):
-        return ErrorHandler(error.InvalidCredentials())
-    u = PlayerLogin.query.filter_by(id = fb.id)
     uid = u.id
     tokens = Token.query.filter((Token.player == uid) | (Token.validity != 3)).all()
     for x in tokens:
