@@ -4,9 +4,6 @@ base = "mysql"
 host = "0.0.0.0"
 port = 19090
 domain = "http://unreve.top:19090"
-binds = {
-    "forum": "mysql+pymysql://sql_www_threenot:6xcKzKsTmHRp4yZB@8.210.100.123:3306/sql_www_threenot"
-}
 
 #[Cleaner Setting]
 maximum_invalid_token = 5000
