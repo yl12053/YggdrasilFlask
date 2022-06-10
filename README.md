@@ -10,6 +10,8 @@ It can only be acts as a reference.
 <details>
 <summary>This is some message for the members from MisakaNework.<br>This is a QQ chat group.</summary>
 Hmm... this is T2 speaking.<br>
+You may not know who I am, but this doesn't matter.<br>
+This is a story that introduce this project and explain why the project getting deprecated.<br>
 This project is originally acts as a self-implemented python version as yggdrasil in Python.<br>
 Since this project is written by myself, <br>
 I would have a better knowledge of my code and I can edit the code to achieve custom function such as the compatibility to a Flarum forum authentication system.<br>
