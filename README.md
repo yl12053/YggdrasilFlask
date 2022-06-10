@@ -8,7 +8,7 @@ All my servers are using "Littleskin" right now.
 It can only be acts as a reference.
 
 <details>
-<summary>This is some message for the members from MisakaNework.</summary>
+<summary>This is some message for the members from MisakaNework.<br>This is a QQ chat group.</summary>
 Hmm... this is T2 speaking.<br>
 This project is originally acts as a self-implemented python version as yggdrasil in Python.<br>
 Since this project is written by myself, <br>
